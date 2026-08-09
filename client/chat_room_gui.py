@@ -247,46 +247,47 @@ class ChatRoomGUI:
 
 # hardcode data for testing
 
+#if __name__ == "__main__":
+class TestChatService:
+
+    def __init__(self, username="User A"):
+        self.username = username
+        self._groups = [
+            {"id": 1, "name": "Group 1"},
+            {"id": 2, "name": "Group 2"},
+            {"id": 3, "name": "Group 3"},
+        ]
+
+    def get_current_user(self):
+        return {"id": 0, "username": self.username, "status": "online"}
+
+    def get_all_users(self):
+        return [
+            {"id": 2, "username": "User B", "status": "online"},
+            {"id": 3, "username": "User C", "status": "offline"},
+            {"id": 4, "username": "User D", "status": "offline"},
+        ]
+
+    def get_all_groups(self):
+        return self._groups
+
+    def get_one_on_one_chat(self, user_id):
+        return [
+            {"username": "User A", "msg": "Hello..."},
+            {"username": "User A", "msg": "My name is A"},
+            {"username": "User B", "msg": "Hello A"},
+            {"username": "User B", "msg": "My name is B"},
+        ]
+
+    def get_group_chat(self, group_id):
+        return []
+
+    # function create new group chat pop up
+    def create_group_chat(self, group_chat_name):
+        new_id = max((g["id"] for g in self._groups), default=0) + 1
+        self._groups.append({"id": new_id, "name": group_chat_name})
+
 if __name__ == "__main__":
-    class TestChatService:
-
-        def __init__(self):
-            self._groups = [
-                {"id": 1, "name": "Group 1"},
-                {"id": 2, "name": "Group 2"},
-                {"id": 3, "name": "Group 3"},
-            ]
-
-        def get_current_user(self):
-            return {"id": 0, "username": "User A", "status": "online"}
-
-        def get_all_users(self):
-            return [
-                {"id": 2, "username": "User B", "status": "online"},
-                {"id": 3, "username": "User C", "status": "offline"},
-                {"id": 4, "username": "User D", "status": "offline"},
-            ]
-
-        def get_all_groups(self):
-            return self._groups
-
-        def get_one_on_one_chat(self, user_id):
-            return [
-                {"username": "User A", "msg": "Hello..."},
-                {"username": "User A", "msg": "My name is A"},
-                {"username": "User B", "msg": "Hello A"},
-                {"username": "User B", "msg": "My name is B"},
-            ]
-
-        def get_group_chat(self, group_id):
-            return []
-
-        # function create new group chat pop up
-        def create_group_chat(self, group_chat_name):
-            new_id = max((g["id"] for g in self._groups), default=0) + 1
-            self._groups.append({"id": new_id, "name": group_chat_name})
-
-
     root = tk.Tk()
 
     chat_service = TestChatService()
