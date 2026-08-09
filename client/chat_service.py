@@ -1,35 +1,9 @@
 # create service for chat room
 class ChatService:
 
-    #mockup data for test
-    def __init__(self):
-        self.current_user = {"id": "u1", "username": "User A", "status": "online"}
-
-        self.users = [
-            {"id": "u2", "username": "User B", "status": "online"},
-            {"id": "u3", "username": "User C", "status": "offline"},
-            {"id": "u4", "username": "User D", "status": "offline"},
-        ]
-
-        self.groups = [
-            {"id": "g1", "name": "Group 1"},
-            {"id": "g2", "name": "Group 2"},
-            {"id": "g3", "name": "Group 3"},
-        ]
-
-        # messages keyed by room_id (user_id for 1-on-1, group_id for group)
-        self.messages = {
-            "u2": [
-                {"sender": "User A", "text": "Hello..."},
-                {"sender": "User A", "text": "My name is A"},
-                {"sender": "User B", "text": "Hello A"},
-                {"sender": "User B", "text": "My name is B"},
-            ],
-        }
-
     # get client obj
-    #def __init__(self):
-    #    self.client = "client"
+    def __init__(self):
+        self.client = "client"
 
     # get all user
     def get_all_users(self):
