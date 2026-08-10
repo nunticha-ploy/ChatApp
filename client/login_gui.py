@@ -45,14 +45,11 @@ def validate_login():
       parent.destroy() 
 
       #open chat GUI
-      # root = tk.Tk()
-      # chat_service = ChatService(sock, username)
-      # app = ChatRoomGUI(root, chat_service)
-      # root.mainloop()
       root = tk.Tk()
-      chat_service = TestChatService(username)
+      chat_service = ChatService(sock, username)
       app = ChatRoomGUI(root, chat_service)
       root.mainloop()
+      
 
     else:
       messagebox.showerror("Login Failed", response)
