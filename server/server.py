@@ -2,6 +2,7 @@ import socket
 import argparse
 import threading #This module lets us create multiple threads
 from authentication import login, signup, get_all_registered_users
+from message_storage import save_message
 
 host = "localhost"
 data_buff = 2048 #receive up to 2048 bytes at a time
@@ -73,6 +74,8 @@ def userLoginHandle(client, address):
                 continue
 
               print(f"{username}: {message}")
+               # Kirandeep: automatically save every valid chat message
+              save_message(username, message)
               client.sendall(("Server received: " + message).encode())
       #singup
       elif parts[0] == "SIGNUP":
