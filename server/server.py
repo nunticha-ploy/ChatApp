@@ -1,12 +1,15 @@
 import socket
 import argparse
 import threading #This module lets us create multiple threads
-from authentication import login, signup
+from authentication import login, signup, get_all_registered_users
 
 host = "localhost"
 data_buff = 2048 #receive up to 2048 bytes at a time
 backlog = 5 #up to 5 clients can wait to connect.
 port = 5000
+
+user_status = {}
+connected_clients = {}
 
 def userLoginHandle(client, address):
   print("Clent connected:", address)
@@ -32,6 +35,9 @@ def userLoginHandle(client, address):
           password = parts[2]
           success, reply, username = login(email, password)
           if success:
+            #user status
+            user_status[username] = "online"
+            connected_clients[username] = client
             client.sendall(f"SUCCESS {username}" .encode())
           else:
             client.sendall(reply.encode())
@@ -45,8 +51,27 @@ def userLoginHandle(client, address):
               message = data.decode().strip()
               #logout
               if message.upper() == "LOGOUT":
+                #user status
+                user_status[username] = "offline"
                 client.sendall("Logout successfully!" .encode())
                 break
+              #get users
+              elif message.upper() == "GET_USERS":
+                print("GET_USERS received")
+                registered_users = get_all_registered_users()
+                print("Registerd user:", registered_users)
+                user_list = []
+                for registered_username in registered_users:
+                  status = user_status.get(registered_username, "offline")
+                  if username in connected_clients:
+                    del connected_clients[username]
+                  print(registered_username, status)
+                  user_list.append(f"{registered_username},{status}")
+                response = "|".join(user_list)
+                print("Sending users", response)
+                client.sendall(response.encode())
+                continue
+
               print(f"{username}: {message}")
               client.sendall(("Server received: " + message).encode())
       #singup
@@ -69,6 +94,8 @@ def userLoginHandle(client, address):
   except Exception as error:
     print("Error:", error)
   finally:
+    if "username" in locals():
+      user_status[username] = "offline"
     client.close()
     print("Client disconnected:", address) 
 
