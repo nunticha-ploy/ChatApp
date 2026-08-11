@@ -1,6 +1,6 @@
 # import library
 import tkinter as tk
-from tkinter import simpledialog
+from tkinter import simpledialog, messagebox
 
 from room_class import ChatRoom
 
@@ -208,6 +208,56 @@ class ChatRoomGUI:
         group_chat_name = tk.Label(top_frame, text=room.name, font=header_font, fg=white, bg=dark_gray)
         group_chat_name.place(relx=0.5, rely=0.5, anchor="center")
 
+        # group member controls
+        if room.type == "group":
+            group_controls = tk.Frame(
+                self.root,
+                background=light_gray
+            )
+
+            group_controls.pack(
+                fill="x"
+            )
+
+            add_member_button = tk.Button(
+                group_controls,
+                text="Add Member",
+                font=name_font,
+                command=self.add_group_member
+            )
+
+            add_member_button.pack(
+                side=tk.LEFT,
+                padx=(10, 5),
+                pady=6
+            )
+
+            remove_member_button = tk.Button(
+                group_controls,
+                text="Remove Member",
+                font=name_font,
+                command=self.remove_group_member
+            )
+
+            remove_member_button.pack(
+                side=tk.LEFT,
+                padx=5,
+                pady=6
+            )
+
+            leave_group_button = tk.Button(
+                group_controls,
+                text="Leave Group",
+                font=name_font,
+                command=self.leave_group_chat
+            )
+
+            leave_group_button.pack(
+                side=tk.RIGHT,
+                padx=(5, 10),
+                pady=6
+            )
+
         # background
         frame = tk.Frame(self.root, background=white)
         frame.pack(fill="both", expand=True)
@@ -244,6 +294,106 @@ class ChatRoomGUI:
                                 fg=white, bg=dark_gray)
         typing_label.pack(side=tk.LEFT, padx=20, pady=15)
 
+  # add member to current group
+    def add_group_member(self):
+        if self.current_room is None:
+            return
+
+        if self.current_room.type != "group":
+            return
+
+        username = simpledialog.askstring(
+            "Add Member",
+            "Enter username:",
+            parent=self.root
+        )
+
+        if username is None:
+            return
+
+        success, message = self.chat_service.add_member(
+            self.current_room.id,
+            username
+        )
+
+        if success:
+            messagebox.showinfo(
+                "Add Member",
+                message
+            )
+        else:
+            messagebox.showwarning(
+                "Add Member",
+                message
+            )
+
+ # remove member from current group
+    def remove_group_member(self):
+        if self.current_room is None:
+            return
+
+        if self.current_room.type != "group":
+            return
+
+        username = simpledialog.askstring(
+            "Remove Member",
+            "Enter username:",
+            parent=self.root
+        )
+
+        if username is None:
+            return
+
+        success, message = self.chat_service.remove_member(
+            self.current_room.id,
+            username
+        )
+
+        if success:
+            messagebox.showinfo(
+                "Remove Member",
+                message
+            )
+        else:
+            messagebox.showwarning(
+                "Remove Member",
+                message
+            )
+
+ # leave current group
+    def leave_group_chat(self):
+        if self.current_room is None:
+            return
+
+        if self.current_room.type != "group":
+            return
+
+        confirm = messagebox.askyesno(
+            "Leave Group",
+            "Are you sure you want to leave this group?"
+        )
+
+        if not confirm:
+            return
+
+        success, message = self.chat_service.leave_group(
+            self.current_room.id
+        )
+
+        if success:
+            messagebox.showinfo(
+                "Leave Group",
+                message
+            )
+
+            self.current_room = None
+            self.show_user_page()
+
+        else:
+            messagebox.showwarning(
+                "Leave Group",
+                message
+            )
 
 # hardcode data for testing
 
