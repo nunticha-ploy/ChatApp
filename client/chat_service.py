@@ -27,8 +27,21 @@ class ChatService:
 
     # get all group
     def get_all_groups(self):
-        return []
-    #self.client.get_all_groups()
+        self.sock.sendall("GET_GROUPS" .encode())
+
+        response = self.sock.recv(2048).decode()
+
+        if response == "NO_GROUPS":
+            return []
+
+        groups = []
+
+        for item in response.split("|"):
+            group_id, group_name = item.split(",", 1)
+
+            groups.append({"id": group_id, "name": group_name})
+
+        return groups
 
     # get private chat
     def get_one_on_one_chat(self, user_id):
@@ -42,7 +55,11 @@ class ChatService:
 
     # create group chat
     def create_group_chat(self, group_chat_name):
-        pass#return self.client.create_group_chat(group_chat_name)
+        create = f"CREATE_GROUP: {group_chat_name}"
+        self.sock.sendall(create.encode())
+
+        response = self.sock.recv(2048).decode()
+        return response
 
     # rename group chat
     def rename_group_chat(self, group_id, new_group_name):

@@ -2,6 +2,7 @@ import socket
 import argparse
 import threading #This module lets us create multiple threads
 from authentication import login, signup, get_all_registered_users
+from chat_data import get_all_groups, get_group_by_id, create_group
 
 host = "localhost"
 data_buff = 2048 #receive up to 2048 bytes at a time
@@ -72,8 +73,40 @@ def userLoginHandle(client, address):
                 client.sendall(response.encode())
                 continue
 
+              #get groups
+              elif message.upper() == "GET_GROUPS":
+                print("GET_GROUPS received")
+
+                groups = get_all_groups()
+                if not groups:
+                  client.sendall("NO_GROUPS" .encode())
+                  continue
+
+                group_list = []
+
+                for group in groups:
+                  group_list.append(f'{group["id"]},{group["name"]}')
+
+                response = "|".join(group_list)
+                print("Sending groups", response)
+                client.sendall(response.encode())
+                continue
+
+              #create group
+              elif message.startswith("CREATE_GROUP"):
+                group_name = message[len("CREATE_GROUP "):].strip()
+
+                if not group_name:
+                  client.sendall("Group name cannot be empty" .encode())
+                  continue
+
+                new_id = create_group(group_name, username)
+
+                client.sendall(f"GROUP_CREATED|{new_id}|{group_name}" .encode())
+
               print(f"{username}: {message}")
               client.sendall(("Server received: " + message).encode())
+
       #singup
       elif parts[0] == "SIGNUP":
         if len(parts) != 4:
@@ -122,7 +155,6 @@ def TCPserver1(port):
     #start a threading
     thread = threading.Thread(target=userLoginHandle, args=(client, address))
     thread.start()
-
    
 
 #Main program
