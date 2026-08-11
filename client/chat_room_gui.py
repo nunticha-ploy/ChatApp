@@ -258,6 +258,49 @@ class ChatRoomGUI:
                 pady=6
             )
 
+            # display group members
+            members_frame = tk.Frame(
+                self.root,
+                background=white
+            )
+            members_frame.pack(
+                fill="x",
+                padx=10,
+                pady=(8, 5)
+            )
+
+            members_title = tk.Label(
+                members_frame,
+                text="MEMBERS",
+                font=bold_font,
+                fg=mid_gray,
+                bg=white
+            )
+            members_title.pack(
+                anchor=tk.W
+            )
+
+            members = self.chat_service.get_group_members(
+                room.id
+            )
+
+            if members:
+                members_text = ", ".join(members)
+            else:
+                members_text = "No members"
+
+            members_label = tk.Label(
+                members_frame,
+                text=members_text,
+                font=name_font,
+                fg=black,
+                bg=white
+            )
+            members_label.pack(
+                anchor=tk.W,
+                pady=(3, 0)
+            )
+
         # background
         frame = tk.Frame(self.root, background=white)
         frame.pack(fill="both", expand=True)
@@ -321,6 +364,16 @@ class ChatRoomGUI:
                 "Add Member",
                 message
             )
+
+            # refresh group page to show updated members
+            self.show_chat_page(
+                self.current_room,
+                self.chat_service.get_group_chat(
+                    self.current_room.id
+                ),
+                "Group"
+            )
+
         else:
             messagebox.showwarning(
                 "Add Member",
@@ -354,6 +407,16 @@ class ChatRoomGUI:
                 "Remove Member",
                 message
             )
+
+            # refresh group page to show updated members
+            self.show_chat_page(
+                self.current_room,
+                self.chat_service.get_group_chat(
+                    self.current_room.id
+                ),
+                "Group"
+            )
+
         else:
             messagebox.showwarning(
                 "Remove Member",
