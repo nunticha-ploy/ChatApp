@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import simpledialog
 
-from room_class import ChatRoom
+from model.room_class import ChatRoom
 
 dark_gray = "#434343"
 mid_gray = "#9E9E9E"
