@@ -1,11 +1,8 @@
 # import library
-
 import tkinter as tk
-from tkinter import simpledialog, messagebox
-from datetime import datetime
+from tkinter import simpledialog
 
 from room_class import ChatRoom
-
 
 dark_gray = "#434343"
 mid_gray = "#9E9E9E"
@@ -27,778 +24,277 @@ bold_font = ("Inclusive Sans", 15, "bold")
 chevron_font = ("Inclusive Sans", 14)
 
 
+# create class
 class ChatRoomGUI:
 
     def __init__(self, root, chat_service):
-
+        # create window
         self.root = root
         self.chat_service = chat_service
 
-        self.current_user = (
-            self.chat_service.get_current_user()
-        )
+        self.current_user = self.chat_service.get_current_user()
 
+        # set variable for current chat room
         self.current_room = None
-        self.current_messages = []
 
         self.root.title("Company Chat")
         self.root.geometry("415x700")
-        self.root.resizable(
-            width=False,
-            height=False
-        )
+        self.root.resizable(width=False, height=False)
 
-        # Load the user list before starting
-        # the background message listener.
         self.show_user_page()
 
-        # The listener is the only code that
-        # receives messages after this point.
-        self.chat_service.start_message_listener(
-            self.receive_message
-        )
-
-    # Clear window
+    # clear window
     def clear(self):
-
         for widget in self.root.winfo_children():
             widget.destroy()
 
-    # Receive a message from ChatService
-    def receive_message(
-        self,
-        sender,
-        text
-    ):
-
-        # Tkinter widgets must be changed
-        # from the main GUI thread.
-        self.root.after(
-            0,
-            self.display_received_message,
-            sender,
-            text
-        )
-
-    # Display received message
-    def display_received_message(
-        self,
-        sender,
-        text
-    ):
-
-        new_message = {
-            "username": sender,
-            "msg": text,
-            "time": datetime.now().strftime("%I:%M:%S %p")
-        }
-
-        # Only add the message to the open
-        # private chat when it belongs there.
-        if (
-            self.current_room is not None
-            and self.current_room.type == "private"
-            and self.current_room.name == sender
-        ):
-
-            self.current_messages.append(
-                new_message
-            )
-
-            self.show_chat_page(
-                self.current_room,
-                self.current_messages,
-                "online"
-            )
-
-    # Status
-    def create_status_row(
-        self,
-        container,
-        status,
-        dot_size=8,
-        text_font=status_font
-    ):
-
+    # status
+    def create_status_row(self, container, status, dot_size=8, text_font=status_font):
+        # if else statement check status
         if status == "online":
-
             status_text = "Online"
             status_color = online_status
-
         else:
-
             status_text = "Offline"
             status_color = mid_gray
 
-        status_row = tk.Frame(
-            container,
-            background=container["background"]
-        )
+        status_row = tk.Frame(container, background=container["background"])
 
-        status_dot = tk.Label(
-            status_row,
-            text="\u25CF",
-            font=(
-                "Inclusive Sans",
-                dot_size
-            ),
-            fg=status_color,
-            bg=container["background"]
-        )
+        status_dot = tk.Label(status_row, text="\u25CF", font=("Inclusive Sans", dot_size), fg=status_color,
+                              bg=container["background"])
+        status_dot.pack(side=tk.LEFT)
 
-        status_dot.pack(
-            side=tk.LEFT
-        )
-
-        status_label = tk.Label(
-            status_row,
-            text=status_text,
-            font=text_font,
-            fg=mid_gray,
-            bg=container["background"]
-        )
-
-        status_label.pack(
-            side=tk.LEFT,
-            padx=(4, 0)
-        )
+        # status text
+        status_label = tk.Label(status_row, text=status_text, font=text_font, fg=mid_gray, bg=container["background"])
+        status_label.pack(side=tk.LEFT, padx=(4, 0))
 
         return status_row
 
-    # Display user page
+    # display user page
     def show_user_page(self):
-
         self.clear()
 
-        # Header
-        top_frame = tk.Frame(
-            self.root,
-            width=415,
-            background=dark_gray
-        )
+        # create header
+        top_frame = tk.Frame(self.root, width=415, background=dark_gray)
+        top_frame.pack(fill="x")
 
-        top_frame.pack(
-            fill="x"
-        )
+        header_inner = tk.Frame(top_frame, background=dark_gray)
+        header_inner.pack(anchor=tk.NW, padx=20, pady=15)
 
-        header_inner = tk.Frame(
-            top_frame,
-            background=dark_gray
-        )
+        current_name_label = tk.Label(header_inner, text=self.current_user["username"], font=header_name_font, fg=white, bg=dark_gray)
+        current_name_label.pack(anchor=tk.NW)
 
-        header_inner.pack(
-            anchor=tk.NW,
-            padx=20,
-            pady=15
-        )
+        # add status row into header container
+        self.create_status_row(header_inner, self.current_user["status"]).pack(anchor=tk.NW)
 
-        current_name_label = tk.Label(
-            header_inner,
-            text=self.current_user["username"],
-            font=header_name_font,
-            fg=white,
-            bg=dark_gray
-        )
+        content = tk.Frame(self.root, background=white)
+        content.pack(fill="both", expand=True)
 
-        current_name_label.pack(
-            anchor=tk.NW
-        )
+        # users part
+        users_title = tk.Label(content, text="USERS", font=section_font, fg=mid_gray, bg=white, bd=0)
+        users_title.pack(anchor=tk.NW, padx=20, pady=(15, 8))
 
-        self.create_status_row(
-            header_inner,
-            self.current_user["status"]
-        ).pack(
-            anchor=tk.NW
-        )
-
-        content = tk.Frame(
-            self.root,
-            background=white
-        )
-
-        content.pack(
-            fill="both",
-            expand=True
-        )
-
-        # Users
-        users_title = tk.Label(
-            content,
-            text="USERS",
-            font=section_font,
-            fg=mid_gray,
-            bg=white,
-            bd=0
-        )
-
-        users_title.pack(
-            anchor=tk.NW,
-            padx=20,
-            pady=(15, 8)
-        )
-
-        # ChatService caches the initial list.
+        # get user from server
         users = self.chat_service.get_all_users()
 
         for user in users:
+            self.create_user_row(content, user)
 
-            self.create_user_row(
-                content,
-                user
-            )
+        # line
+        line = tk.Frame(content, width=415, height=1, background=light_gray)
+        line.pack(fill="x", pady=10)
 
-        # Separator
-        line = tk.Frame(
-            content,
-            width=415,
-            height=1,
-            background=light_gray
-        )
-
-        line.pack(
-            fill="x",
-            pady=10
-        )
-
-        # Groups
-        group_title = tk.Label(
-            content,
-            text="GROUPS",
-            font=section_font,
-            fg=mid_gray,
-            bg=white,
-            bd=0
-        )
-
-        group_title.pack(
-            anchor=tk.NW,
-            padx=20,
-            pady=(5, 8)
-        )
+        # groups part
+        group_title = tk.Label(content, text="GROUPS", font=section_font, fg=mid_gray, bg=white, bd=0)
+        group_title.pack(anchor=tk.NW, padx=20, pady=(5, 8))
 
         groups = self.chat_service.get_all_groups()
-
         for group in groups:
+            self.create_group_row(content, group)
 
-            self.create_group_row(
-                content,
-                group
-            )
-
-        # Create group
+        # create group button
         create_new_group_label = tk.Label(
-            content,
-            text="+ Create new group",
-            fg=mid_gray,
-            bg=white,
-            font=status_font,
-            cursor="hand2"
-        )
+            content, text="+ Create new group", fg=mid_gray, bg=white, font=status_font, cursor="hand2")
+        create_new_group_label.pack(anchor=tk.NW, padx=20, pady=15)
+        create_new_group_label.bind("<Button-1>", lambda e: self.create_group_chat())
 
-        create_new_group_label.pack(
-            anchor=tk.NW,
-            padx=20,
-            pady=15
-        )
-
-        create_new_group_label.bind(
-            "<Button-1>",
-            lambda e: self.create_group_chat()
-        )
-
-    # Create new group
+    # function create new group chat
     def create_group_chat(self):
-
-        group_name = simpledialog.askstring(
-            "New group",
-            "Group name:",
-            parent=self.root
-        )
-
+        group_name = simpledialog.askstring("New group", "Group name:", parent=self.root)
         if group_name:
-
-            self.chat_service.create_group_chat(
-                group_name
-            )
-
+            self.chat_service.create_group_chat(group_name)
             self.show_user_page()
 
-    # Create user row
-    def create_user_row(
-        self,
-        container,
-        user
-    ):
+    # create user row to display
+    def create_user_row(self, container, user):
 
         user_id = user["id"]
         username = user["username"]
         status = user["status"]
 
-        row = tk.Frame(
-            container,
-            width=415,
-            background=white
-        )
+        row = tk.Frame(container, width=415, background=white)
+        row.pack(fill="x", padx=20, pady=8)
 
-        row.pack(
-            fill="x",
-            padx=20,
-            pady=8
-        )
+        # username in row
+        name_label = tk.Label(row, text=username, font=row_name_font, fg=black, bg=white, bd=0)
+        name_label.pack(anchor=tk.NW)
 
-        name_label = tk.Label(
-            row,
-            text=username,
-            font=row_name_font,
-            fg=black,
-            bg=white,
-            bd=0
-        )
+        status_row = self.create_status_row(row, status)
+        status_row.pack(anchor=tk.NW)
 
-        name_label.pack(
-            anchor=tk.NW
-        )
+        # enter chat sign >
+        enter_chat_sign = tk.Label(row, text="\u203A", font=chevron_font, fg=mid_gray, bg=white, bd=0)
+        enter_chat_sign.place(relx=1.0, rely=0.5, anchor="e")
 
-        status_row = self.create_status_row(
-            row,
-            status
-        )
-
-        status_row.pack(
-            anchor=tk.NW
-        )
-
-        enter_chat_sign = tk.Label(
-            row,
-            text="\u203A",
-            font=chevron_font,
-            fg=mid_gray,
-            bg=white,
-            bd=0
-        )
-
-        enter_chat_sign.place(
-            relx=1.0,
-            rely=0.5,
-            anchor="e"
-        )
-
-        clickable = [
-            row,
-            name_label,
-            status_row,
-            enter_chat_sign
-        ] + list(
-            status_row.winfo_children()
-        )
-
+        # click enter chat
+        clickable = [row, name_label, status_row, enter_chat_sign] + list(status_row.winfo_children())
         for widget in clickable:
+            widget.bind("<Button-1>", lambda e, uid=user_id, name=username: self.open_one_on_one_chat(uid, name, status))
 
-            widget.bind(
-                "<Button-1>",
-                lambda e,
-                uid=user_id,
-                name=username,
-                user_status=status:
-                self.open_one_on_one_chat(
-                    uid,
-                    name,
-                    user_status
-                )
-            )
+    # function open 1-1 chat room
+    def open_one_on_one_chat(self, user_id, name, status):
 
-    # Open one-on-one chat
-    def open_one_on_one_chat(
-        self,
-        user_id,
-        name,
-        status
-    ):
+        # set this room as current room
+        self.current_room = ChatRoom(id=user_id, type="private", name=name)
 
-        self.current_room = ChatRoom(
-            id=user_id,
-            type="private",
-            name=name
-        )
+        msg = self.chat_service.get_one_on_one_chat(user_id)
 
-        msg = self.chat_service.get_one_on_one_chat(
-            user_id
-        )
+        self.show_chat_page(self.current_room, msg, status)
 
-        self.current_messages = list(msg)
-
-        self.show_chat_page(
-            self.current_room,
-            self.current_messages,
-            status
-        )
-
-    # Create group row
-    def create_group_row(
-        self,
-        container,
-        group
-    ):
+    # create group row to display
+    def create_group_row(self, container, group):
 
         group_id = group["id"]
         group_name = group["name"]
 
-        row = tk.Frame(
-            container,
-            width=415,
-            background=white
-        )
+        row = tk.Frame(container, width=415, background=white)
+        row.pack(fill="x", padx=20, pady=8)
 
-        row.pack(
-            fill="x",
-            padx=20,
-            pady=8
-        )
+        # group in row
+        name_label = tk.Label(row, text=group_name, font=row_name_font, fg=black, bg=white, bd=0)
+        name_label.pack(anchor=tk.NW)
 
-        name_label = tk.Label(
-            row,
-            text=group_name,
-            font=row_name_font,
-            fg=black,
-            bg=white,
-            bd=0
-        )
+        # enter chat sign >
+        enter_chat_sign = tk.Label(row, text="\u203A", font=chevron_font, fg=mid_gray, bg=white, bd=0)
+        enter_chat_sign.place(relx=1.0, rely=0.5, anchor="e")
 
-        name_label.pack(
-            anchor=tk.NW
-        )
+        # click enter chat
+        for widget in (row, name_label, enter_chat_sign):
+            widget.bind("<Button-1>", lambda e, uid=group_id, name=group_name: self.open_group_chat(uid, name))
 
-        enter_chat_sign = tk.Label(
-            row,
-            text="\u203A",
-            font=chevron_font,
-            fg=mid_gray,
-            bg=white,
-            bd=0
-        )
+    # function open group chat room
+    def open_group_chat(self, group_id, group_name):
 
-        enter_chat_sign.place(
-            relx=1.0,
-            rely=0.5,
-            anchor="e"
-        )
-
-        for widget in (
-            row,
-            name_label,
-            enter_chat_sign
-        ):
-
-            widget.bind(
-                "<Button-1>",
-                lambda e,
-                uid=group_id,
-                name=group_name:
-                self.open_group_chat(
-                    uid,
-                    name
-                )
-            )
-
-    # Open group chat
-    def open_group_chat(
-        self,
-        group_id,
-        group_name
-    ):
-
-        self.current_room = ChatRoom(
-            id=group_id,
-            type="group",
-            name=group_name
-        )
-
-        msg = self.chat_service.get_group_chat(
-            group_id
-        )
-
-        self.current_messages = list(msg)
-
-        self.show_chat_page(
-            self.current_room,
-            self.current_messages,
-            "Group"
-        )
+        # set this room as current room
+        self.current_room = ChatRoom(id=group_id, type="group", name=group_name)
+        msg = self.chat_service.get_group_chat(group_id)
+        self.show_chat_page(self.current_room, msg, "Group")
 
     # Chat page
-    def show_chat_page(
-        self,
-        room,
-        msg,
-        status
-    ):
+    def show_chat_page(self, room, msg, status):
 
         self.clear()
+        # chat header
+        top_frame = tk.Frame(self.root, width=415, height=60, background=dark_gray)
+        top_frame.pack(fill="x")
+        top_frame.pack_propagate(False)
 
-        # Chat header
-        top_frame = tk.Frame(
-            self.root,
-            width=415,
-            height=60,
-            background=dark_gray
-        )
+        # back button to user page
+        back_button = tk.Label(top_frame, text="<", fg=mid_gray, bg=dark_gray, font=header_font)
+        back_button.pack(side=tk.LEFT, padx=20)
+        back_button.bind("<Button-1>", lambda e: self.show_user_page())
 
-        top_frame.pack(
-            fill="x"
-        )
+        # Group chat name
+        group_chat_name = tk.Label(top_frame, text=room.name, font=header_font, fg=white, bg=dark_gray)
+        group_chat_name.place(relx=0.5, rely=0.5, anchor="center")
 
-        top_frame.pack_propagate(
-            False
-        )
+        # background
+        frame = tk.Frame(self.root, background=white)
+        frame.pack(fill="both", expand=True)
 
-        # Back button
-        back_button = tk.Label(
-            top_frame,
-            text="<",
-            fg=mid_gray,
-            bg=dark_gray,
-            font=header_font
-        )
-
-        back_button.pack(
-            side=tk.LEFT,
-            padx=20
-        )
-
-        back_button.bind(
-            "<Button-1>",
-            lambda e: self.show_user_page()
-        )
-
-        # Chat name
-        group_chat_name = tk.Label(
-            top_frame,
-            text=room.name,
-            font=header_font,
-            fg=white,
-            bg=dark_gray
-        )
-
-        group_chat_name.place(
-            relx=0.5,
-            rely=0.5,
-            anchor="center"
-        )
-
-        # Background
-        frame = tk.Frame(
-            self.root,
-            background=white
-        )
-
-        frame.pack(
-            fill="both",
-            expand=True
-        )
-
-        # Messages
+        # bubble message
         for message in msg:
-
             sender = message["username"]
             text = message["msg"]
-            message_time = message.get("time", "")
 
-            row = tk.Frame(
-                frame,
-                bg=white
-            )
+            row = tk.Frame(frame, bg=white)
+            row.pack(fill="x", padx=20, pady=7)
 
-            row.pack(
-                fill="x",
-                padx=20,
-                pady=7
-            )
+            is_other_party = (sender == room.name)
 
-            is_other_party = (
-                sender == room.name
-            )
+            bubble_bg = bubble_gray if is_other_party else light_gray
+            bubble_fg = white if is_other_party else black
 
-            bubble_bg = (
-                bubble_gray
-                if is_other_party
-                else light_gray
-            )
+            bubble = tk.Label(row, text=text, font=msg_font, fg=bubble_fg, bg=bubble_bg, padx=12, pady=6)
+            sender_label = tk.Label(row, text=sender, font=name_font, fg=mid_gray, bg=white)
 
-            bubble_fg = (
-                white
-                if is_other_party
-                else black
-            )
-
-            bubble = tk.Label(
-                row,
-                text=text,
-                font=msg_font,
-                fg=bubble_fg,
-                bg=bubble_bg,
-                padx=12,
-                pady=6
-            )
-
-            sender_label = tk.Label(
-                row,
-                text=f"{sender}  {message_time}",
-                font=name_font,
-                fg=mid_gray,
-                bg=white
-            )
-
+            # if else check user(me or other)
             if is_other_party:
-
-                sender_label.pack(
-                    side=tk.RIGHT
-                )
-
-                bubble.pack(
-                    side=tk.RIGHT,
-                    padx=(0, 8)
-                )
-
+                sender_label.pack(side=tk.RIGHT)
+                bubble.pack(side=tk.RIGHT, padx=(0, 8))
             else:
+                sender_label.pack(side=tk.LEFT)
+                bubble.pack(side=tk.LEFT, padx=(8, 0))
 
-                sender_label.pack(
-                    side=tk.LEFT
-                )
+        typing_frame = tk.Frame(self.root, width=415, height=60, background=dark_gray)
+        typing_frame.pack(fill="x", side=tk.BOTTOM)
+        typing_frame.pack_propagate(False)
 
-                bubble.pack(
-                    side=tk.LEFT,
-                    padx=(8, 0)
-                )
+        typing_label = tk.Label(typing_frame, text="Typing....", font=medium_font,
+                                fg=white, bg=dark_gray)
+        typing_label.pack(side=tk.LEFT, padx=20, pady=15)
 
-        # Message input area
-        typing_frame = tk.Frame(
-            self.root,
-            width=415,
-            height=60,
-            background=dark_gray
-        )
 
-        typing_frame.pack(
-            fill="x",
-            side=tk.BOTTOM
-        )
+# hardcode data for testing
 
-        typing_frame.pack_propagate(
-            False
-        )
+#if __name__ == "__main__":
+class TestChatService:
 
-        # Message entry
-        self.message_entry = tk.Entry(
-            typing_frame,
-            font=msg_font
-        )
+    def __init__(self, username="User A"):
+        self.username = username
+        self._groups = [
+            {"id": 1, "name": "Group 1"},
+            {"id": 2, "name": "Group 2"},
+            {"id": 3, "name": "Group 3"},
+        ]
 
-        self.message_entry.pack(
-            side=tk.LEFT,
-            fill="x",
-            expand=True,
-            padx=(10, 5),
-            pady=12
-        )
+    def get_current_user(self):
+        return {"id": 0, "username": self.username, "status": "online"}
 
-        # Send button
-        send_button = tk.Button(
-            typing_frame,
-            text="Send",
-            font=name_font,
-            command=self.send_message
-        )
+    def get_all_users(self):
+        return [
+            {"id": 2, "username": "User B", "status": "online"},
+            {"id": 3, "username": "User C", "status": "offline"},
+            {"id": 4, "username": "User D", "status": "offline"},
+        ]
 
-        send_button.pack(
-            side=tk.RIGHT,
-            padx=(5, 10),
-            pady=12
-        )
+    def get_all_groups(self):
+        return self._groups
 
-        # Clear chat button
-        clear_button = tk.Button(
-        typing_frame,
-        text="Clear Chat",
-        font=name_font,
-        command=self.clear_chat_history
-)
+    def get_one_on_one_chat(self, user_id):
+        return [
+            {"username": "User A", "msg": "Hello..."},
+            {"username": "User A", "msg": "My name is A"},
+            {"username": "User B", "msg": "Hello A"},
+            {"username": "User B", "msg": "My name is B"},
+        ]
 
-        clear_button.pack(
-        side=tk.RIGHT,
-        padx=10,
-        pady=12
-)
-        # Enter sends message
-        self.message_entry.bind(
-            "<Return>",
-            lambda event: self.send_message()
-        )
-        # Clear messages from the current chat
-    def clear_chat_history(self):
+    def get_group_chat(self, group_id):
+        return []
 
-        if not self.current_messages:
-            messagebox.showinfo(
-                "Clear Chat",
-                "There are no messages to clear."
-            )
-            return
+    # function create new group chat pop up
+    def create_group_chat(self, group_chat_name):
+        new_id = max((g["id"] for g in self._groups), default=0) + 1
+        self._groups.append({"id": new_id, "name": group_chat_name})
 
-        confirm = messagebox.askyesno(
-            "Clear Chat",
-            "Are you sure you want to clear this chat history?"
-        )
+if __name__ == "__main__":
+    root = tk.Tk()
 
-        if not confirm:
-            return
+    chat_service = TestChatService()
 
-        self.current_messages.clear()
+    app = ChatRoomGUI(
+        root,
+        chat_service
+    )
 
-        self.render_messages(
-            self.current_messages
-        )
-    # Send message
-    def send_message(self):
-
-        message = self.message_entry.get().strip()
-
-        # Prevent empty messages
-        if not message:
-
-            messagebox.showwarning(
-                "Empty Message",
-                "Message cannot be empty."
-            )
-
-            return
-
-        if self.current_room is None:
-            return
-
-        success = self.chat_service.send_msg(
-            self.current_room,
-            message
-        )
-
-        if success:
-         
-        # Save sent message with current time
-            self.current_messages.append({
-        "username": self.current_user["username"],
-        "msg": message,
-        "time": datetime.now().strftime("%I:%M:%S %p")
-})
-            self.message_entry.delete(
-                0,
-                tk.END
-            )
-
-            print(
-                "Message sent:",
-                message
-            )
-            self.show_chat_page(
-            self.current_room,
-            self.current_messages,
-            "online"
-)
-            
+    root.mainloop()
