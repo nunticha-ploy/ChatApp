@@ -1,6 +1,6 @@
 # import library
 import tkinter as tk
-from tkinter import simpledialog
+from tkinter import simpledialog, messagebox
 
 from model.room_class import ChatRoom
 
@@ -121,9 +121,19 @@ class ChatRoomGUI:
     # function create new group chat
     def create_group_chat(self):
         group_name = simpledialog.askstring("New group", "Group name:", parent=self.root)
-        if group_name:
-            self.chat_service.create_group_chat(group_name)
-            self.show_user_page()
+
+        if group_name is None:
+            return
+
+        group_name = group_name.strip()
+
+        #validation input field cannot be empty
+        if not group_name:
+            messagebox.showwarning("Invalid", "Group name cannot be empty.")
+            return
+
+        self.chat_service.create_group_chat(group_name)
+        self.show_user_page()
 
     # create user row to display
     def create_user_row(self, container, user):
@@ -189,6 +199,35 @@ class ChatRoomGUI:
         self.current_room = ChatRoom(id=group_id, type="group", name=group_name)
         msg = self.chat_service.get_group_chat(group_id)
         self.show_chat_page(self.current_room, msg, "Group")
+
+    #group setting container
+    def group_setting(self, button, group_id, group_name):
+        option =tk.Menu(self.root, tearoff=0)
+
+        option.add_command(label="Rename", command=lambda: self.rename_group_chat(group_id, group_name, group_name))
+        option.add_command(label="Delete", command=lambda: self.delete_group_chat(group_id, group_name))
+        x = button.winfo_rootx()
+        y = button.winfo_rooty() + button.winfo_width().winfo_height()
+
+        option.post(x, y)
+
+    #rename group
+    def rename_group_chat(self, group_id, group_name, current_name):
+        new_name = simpledialog.askstring("Rename", "New group name:", initialvalue=current_name, parent=self.root)
+
+        if new_name is None:
+            return
+
+        group_name = group_name.strip()
+
+        # validation input field cannot be empty
+        if not new_name:
+            messagebox.showwarning("Invalid", "Group name cannot be empty.")
+            return
+
+        self.chat_service.create_group_chat(new_name)
+        self.show_user_page()
+
 
     # Chat page
     def show_chat_page(self, room, msg, status):
