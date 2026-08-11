@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import socket
 import subprocess
-from chat_room_gui import ChatRoomGUI, TestChatService
+from chat_room_gui import ChatRoomGUI
 from chat_service import ChatService
 
 
