@@ -61,3 +61,18 @@ def login(email, password):
   except FileNotFoundError:
     return False, "No registered users.", None
   return False, "Login failed!", None
+
+#get all lgin user
+def get_all_registered_users():
+  users = []
+  try:
+    with open(user_details_file, "r") as f:
+      for line in f:
+        parts = line.split()
+
+        if len(parts) >= 3:
+          username = parts[0]
+          users.append(username)
+  except FileExistsError:
+    pass
+  return users
