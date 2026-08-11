@@ -2,7 +2,8 @@ import socket
 import argparse
 import threading #This module lets us create multiple threads
 from authentication import login, signup, get_all_registered_users
-from chat_data import get_all_groups, get_group_by_id, create_group
+from chat_data import get_all_groups, get_group_by_id, create_group, rename_group, delete_group
+from chat_permission import can_edit_group
 
 host = "localhost"
 data_buff = 2048 #receive up to 2048 bytes at a time
@@ -96,6 +97,7 @@ def userLoginHandle(client, address):
               elif message.startswith("CREATE_GROUP"):
                 group_name = message[len("CREATE_GROUP "):].strip()
 
+
                 if not group_name:
                   client.sendall("Group name cannot be empty" .encode())
                   continue
@@ -103,6 +105,43 @@ def userLoginHandle(client, address):
                 new_id = create_group(group_name, username)
 
                 client.sendall(f"GROUP_CREATED|{new_id}|{group_name}" .encode())
+                continue
+
+              #create group
+              elif message.startswith("RENAME_GROUP"):
+                try:
+                  _, group_id, new_name = message.split(":", 2)
+                  new_name = new_name.strip()
+
+                except ValueError:
+                  client.sendall("Invalid RENAME_GROUP format".encode())
+                  continue
+
+                if not new_name:
+                  client.sendall("Group name cannot be empty".encode())
+                  continue
+
+                allowed, reason = can_edit_group(group_id, username)
+                if not allowed:
+                  client.sendall(f"RENAME_FAILED|{reason}".encode())
+                  continue
+
+                rename_group(group_id, new_name)
+                client.sendall(f"GROUP_RENAMED|{group_id}|{new_name}".encode())
+                continue
+
+              #delete group
+              elif message.startswith("DELETE_GROUP:"):
+                group_id = message.split(":", 1)[1].strip()
+
+                allowed, reason = can_edit_group(group_id, username)
+                if not allowed:
+                  client.sendall(f"DELETE_FAILED|{reason}".encode())
+                  continue
+
+                delete_group(group_id)
+                client.sendall(f"GROUP_DELETED|{group_id}".encode())
+                continue
 
               print(f"{username}: {message}")
               client.sendall(("Server received: " + message).encode())
@@ -163,4 +202,5 @@ if __name__ == "__main__":
   parser.add_argument("--port", action="store", dest="port", type=int, required=True)
   given_args = parser.parse_args()
   port = given_args.port
-  TCPserver1(port)  
+  TCPserver1(port)
+
