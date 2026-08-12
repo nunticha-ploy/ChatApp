@@ -206,40 +206,30 @@ class ChatService:
     # Send message
     def send_msg(self, room, msg):
 
-        if not msg.strip():
+        message = msg.strip()
+
+        if not message:
             return False
 
-        if room.type == "private":
-
-            command = (
-                f"SEND_MESSAGE|PRIVATE|"
-                f"{room.name}|{msg}"
-            )
-
-        else:
-
-            command = (
-                f"SEND_MESSAGE|GROUP|"
-                f"{room.id}|{msg}"
-            )
-
         try:
+            # send actual message text to server
+            self.sock.sendall(
+                message.encode()
+            )
+
+            # receive normal server confirmation
+            response = self.sock.recv(
+                2048
+            ).decode()
 
             print(
-                "Sending:",
-                command
-            )
-
-            # Do not call recv() here.
-            # The background listener receives all server messages.
-            self.sock.sendall(
-                command.encode()
+                "Server:",
+                response
             )
 
             return True
 
         except Exception as error:
-
             print(
                 "Error sending message:",
                 error

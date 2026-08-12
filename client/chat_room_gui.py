@@ -329,14 +329,87 @@ class ChatRoomGUI:
                 sender_label.pack(side=tk.LEFT)
                 bubble.pack(side=tk.LEFT, padx=(8, 0))
 
-        typing_frame = tk.Frame(self.root, width=415, height=60, background=dark_gray)
-        typing_frame.pack(fill="x", side=tk.BOTTOM)
-        typing_frame.pack_propagate(False)
+            typing_frame = tk.Frame(
+            self.root,
+            width=415,
+            height=60,
+            background=dark_gray
+        )
 
-        typing_label = tk.Label(typing_frame, text="Typing....", font=medium_font,
-                                fg=white, bg=dark_gray)
-        typing_label.pack(side=tk.LEFT, padx=20, pady=15)
+            typing_frame.place(
+            x=0,
+            y=640,
+            width=415,
+            height=60
+        )
 
+            typing_frame.lift()
+
+    # message entry
+        self.message_entry = tk.Entry(
+            typing_frame,
+            font=msg_font
+        )
+
+        self.message_entry.pack(
+            side=tk.LEFT,
+            fill="x",
+            expand=True,
+            padx=(10, 5),
+            pady=12
+        )
+
+        # Send button
+        send_button = tk.Button(
+            typing_frame,
+            text="Send",
+            font=name_font,
+            command=self.send_message
+        )
+
+        send_button.pack(
+            side=tk.RIGHT,
+            padx=(5, 10),
+            pady=12
+        )
+
+        # Press Enter to send
+        self.message_entry.bind(
+            "<Return>",
+            self.send_message
+        )
+
+            # send message
+    def send_message(self, event=None):
+
+        if self.current_room is None:
+            return "break"
+
+        message = self.message_entry.get().strip()
+
+        # do nothing if textbox is empty
+        if not message:
+            return "break"
+
+        success = self.chat_service.send_msg(
+            self.current_room,
+            message
+        )
+
+        if success:
+
+            # clear textbox after sending
+            self.message_entry.delete(
+                0,
+                tk.END
+            )
+
+            messagebox.showinfo(
+                "Message Sent",
+                "Message sent successfully."
+            )
+
+        return "break"
   # add member to current group
     def add_group_member(self):
         if self.current_room is None:
