@@ -19,6 +19,7 @@ online_status = "#A5FF56"
 header_font = ("Inclusive Sans", 26)
 medium_font = ("Inclusive Sans", 15)
 status_font = ("Inclusive Sans", 11)
+title_font = ("Inclusive Sans", 24, "bold")
 
 
 
@@ -69,45 +70,60 @@ def signup():
   finally:
     sock.close()
 
+# add login
+def open_login():
+  #close signup window first
+  parent.destroy() 
+   
+  #open signup GUI
+  subprocess.Popen(["python", "login_gui.py"])
+
+
 # create the main signup form
 parent = tk.Tk()
-parent.title("Signup")
+parent.title("COMPANY CHAT")
 parent.geometry("415x700")
-
-#header
-header = tk.Frame(parent, bg=dark_gray, height=100)
-header.pack(fill="x")
-header.pack_propagate(False)
-
-
-title_label= tk.Label(header, text="Create Account", font=header_font, fg=white, bg=dark_gray)
-title_label.pack(padx=20, pady=25)
+parent.configure(bg=white)
+parent.resizable(False, False)
 
 #content
-content = tk.Frame(parent, bg=white)
-content.pack(fill="both", expand=True, padx=25, pady=25)
+content = tk.Frame(parent, bg=white, width=220)
+content.place(relx=0.5, rely=0.32, anchor="center")
+
+#TITLE
+title_label= tk.Label(content, text="CREATE ACCOUNT", font=title_font, fg=black, bg=white)
+title_label.pack(pady=(0, 25))
+
 
 #username
-username_label = tk.Label(content, text="Username", font=medium_font, fg=black, bg=white)
-username_label.pack(pady=(20, 5))
-username_entry = tk.Entry(content, font=medium_font)
-username_entry.pack(fill="x", pady=(0, 15))
+username_label = tk.Label(content, text="Username", font=status_font, fg=black, bg=white)
+username_label.pack(anchor="w", pady=(0, 5))
+username_entry = tk.Entry(content, font=medium_font,bg=light_gray, fg=black, relief="flat", bd=0)
+username_entry.pack(fill="x",ipady=6, pady=(0, 15))
 
 # email
-email_label = tk.Label(content, text="Email", font=medium_font, fg=black, bg=white)
-email_label.pack(pady=(20, 5))
-email_entry = tk.Entry(content, font=medium_font)
-email_entry.pack(fill="x", pady=(0, 15))
+email_label = tk.Label(content, text="E-mail", font=status_font, fg=black, bg=white)
+email_label.pack(anchor="w", pady=(0, 5))
+email_entry = tk.Entry(content, font=medium_font,bg=light_gray, fg=black, relief="flat", bd=0)
+email_entry.pack(fill="x", ipady=6, pady=(0, 15))
 
 #password
-password_label = tk.Label(content, text="Password", font=medium_font, fg=black, bg=white)
-password_label.pack(pady=(10, 5))
-password_entry = tk.Entry(content, font=medium_font, show="*")
-password_entry.pack(fill="x", pady=(0, 25))
+password_label = tk.Label(content, text="Password", font=status_font, fg=black, bg=white)
+password_label.pack(anchor="w", pady=(10, 5))
+password_entry = tk.Entry(content, font=medium_font, bg=light_gray, fg=black, relief="flat", bd=0, show="*")
+password_entry.pack(fill="x", ipady=6, pady=(0, 15))
 
 #signup button
-signup_button = tk.Button(content, text="Sign Up", font=medium_font, fg=black, bg=white, command=signup)
-signup_button.pack(fill="x", pady=20)
+signup_button = tk.Button(content, text="Sign Up", font=status_font, fg=white, bg=dark_gray, activebackground=mid_gray, activeforeground=white, relief="flat", bd=0, command=signup)
+signup_button.pack(fill="x", pady=5)
+
+#add login
+login_label = tk.Label(content, text="Already have an account?", font=status_font, fg=mid_gray, bg=white, relief="flat", bd=0, )
+login_label.pack(fill="x", pady=(20, 5))
+
+#signup button
+login_button = tk.Button(content, text="Login", font=status_font, fg=black, bg=white, command=open_login)
+login_button.pack()
 
 #start GUI loop
 parent.mainloop()
