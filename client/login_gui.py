@@ -2,13 +2,27 @@ import tkinter as tk
 from tkinter import messagebox
 import socket
 import subprocess
-from chat_room_gui import ChatRoomGUI, TestChatService
+from chat_room_gui import ChatRoomGUI
 from chat_service import ChatService
 
 
 host = "localhost"
 data_buff = 2048
 port = 5000
+
+# style
+dark_gray = "#434343"
+mid_gray = "#9E9E9E"
+light_gray = "#D9D9D9"
+bubble_gray = "#8C8C8C"
+white = "#FFFFFF"
+black = "#000000"
+online_status = "#A5FF56"
+
+header_font = ("Inclusive Sans", 26)
+medium_font = ("Inclusive Sans", 15)
+status_font = ("Inclusive Sans", 9)
+title_font = ("Inclusive Sans", 28, "bold")
 
 # function to validate the login
 def validate_login():
@@ -69,90 +83,43 @@ def open_signup():
 
 # create the main login form
 parent = tk.Tk()
-parent.title("Login Form")
-parent.geometry("350x250")
+parent.title("COMPANY CHAT")
+parent.geometry("415x700")
+parent.configure(bg=white)
+parent.resizable(False, False)
+
+#content
+content = tk.Frame(parent, bg=white, width=220)
+content.place(relx=0.5, rely=0.30, anchor="center")
+
+#title
+title_label= tk.Label(content, text="WELCOME", font=title_font, fg=black, bg=white)
+title_label.pack(pady=(0, 25))
 
 # email
-email_label = tk.Label(parent, text="Email:")
-email_label.pack(pady=(20, 5))
-email_entry = tk.Entry(parent, width=30)
-email_entry.pack()
+email_label = tk.Label(content, text="E-mail", font=status_font, fg=black, bg=white)
+email_label.pack(anchor="w", pady=(0, 5))
+email_entry = tk.Entry(content, font=medium_font,bg=light_gray, fg=black, relief="flat", bd=0)
+email_entry.pack(fill="x", ipady=6, pady=(0, 15))
 
 #password
-password_label = tk.Label(parent, text="Password:")
-password_label.pack(pady=(10, 5))
-password_entry = tk.Entry(parent, width=30, show="*")
-password_entry.pack()
+password_label = tk.Label(content, text="Password", font=status_font, fg=black, bg=white)
+password_label.pack(anchor="w", pady=(10, 5))
+password_entry = tk.Entry(content, font=medium_font, bg=light_gray, fg=black, relief="flat", bd=0, show="*")
+password_entry.pack(fill="x", ipady=6, pady=(0, 15))
 
 #login button
-login_button = tk.Button(parent, text="Login", command=validate_login)
-login_button.pack(pady=20)
+login_button = tk.Button(content, text="Login", font=status_font, fg=white, bg=dark_gray, activebackground=mid_gray, activeforeground=white, command=validate_login)
+login_button.pack(fill="x", ipady=5)
 
 
 #add signup
-signup_label = tk.Label(parent, text="Don't have an account?")
-signup_label.pack()
+signup_label = tk.Label(content, text="Don't have an account?", font=status_font, fg=mid_gray, bg=white, relief="flat", bd=0)
+signup_label.pack(fill="x", pady=(20, 5))
 
 #signup button
-signup_button = tk.Button(parent, text="Signup", command=open_signup)
-signup_button.pack(pady=5)
+signup_button = tk.Button(content, text="Sign Up", font=status_font, fg=black, bg=white, command=open_signup)
+signup_button.pack()
 
 #start GUI loop
 parent.mainloop()
-
-
-
-# hardcode data for testing
-
-if __name__ == "__main__":
-    class TestChatService:
-
-        def __init__(self, username):
-            self.username = username
-
-            self._groups = [
-                {"id": 1, "name": "Group 1"},
-                {"id": 2, "name": "Group 2"},
-                {"id": 3, "name": "Group 3"},
-            ]
-
-        def get_current_user(self):
-            return {"id": 0, "username": self.username, "status": "online"}
-
-        def get_all_users(self):
-            return [
-                {"id": 2, "username": "User B", "status": "online"},
-                {"id": 3, "username": "User C", "status": "offline"},
-                {"id": 4, "username": "User D", "status": "offline"},
-            ]
-
-        def get_all_groups(self):
-            return self._groups
-
-        def get_one_on_one_chat(self, user_id):
-            return [
-                {"username": self.username, "msg": "Hello..."},
-                {"username": self.username, "msg": "My name is " + self.username},
-                {"username": "User B", "msg": "Hello A"},
-                {"username": "User B", "msg": "My name is B"},
-            ]
-
-        def get_group_chat(self, group_id):
-            return []
-
-        # function create new group chat pop up
-        def create_group_chat(self, group_chat_name):
-            new_id = max((g["id"] for g in self._groups), default=0) + 1
-            self._groups.append({"id": new_id, "name": group_chat_name})
-
-
-    root = tk.Tk()
-
-    chat_service = TestChatService()
-
-    app = ChatRoomGUI(
-        root,
-        chat_service
-    )
-
-    root.mainloop()
