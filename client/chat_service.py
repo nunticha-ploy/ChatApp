@@ -169,6 +169,14 @@ class ChatService:
     # Get group chat
     def get_group_chat(self, group_id):
         return []
+
+    # create group chat
+    def create_group_chat(self, group_chat_name):
+        create = f"CREATE_GROUP: {group_chat_name}"
+        self.sock.sendall(create.encode())
+        response = self.sock.recv(2048).decode()
+        return response
+
     # Rename group chat
     def rename_group_chat(self, group_id, new_group_name):
         msg = f"RENAME_GROUP:{group_id}:{new_group_name}"
