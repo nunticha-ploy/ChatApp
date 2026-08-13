@@ -109,13 +109,19 @@ class ChatService:
         username = username.strip()
         if not username:
             return False, "Username cannot be empty."
-        existing_users = [u["username"] for u in self.get_all_users()]
-        if username not in existing_users:
-            return False, "User not found."
-        if username in group["members"]:
-            return False, "User is already a member."
-        group["members"].append(username)
-        return True, "Member added successfully."
+        # existing_users = [u["username"] for u in self.get_all_users()]
+        # if username not in existing_users:
+        #     return False, "User not found."
+        # if username in group["members"]:
+        #     return False, "User is already a member."
+        # group["members"].append(username)
+        # return True, "Member added successfully."
+
+        #send command to server, let server know add a new user
+        add = f"ADD_MEMBER|{group_id}|{username}"
+        self.sock.sendall(add.encode())
+        response = self.sock.recv(2048).decode()
+        return response
 
     # remove member from group
     def remove_member(self, group_id, username):
@@ -123,12 +129,19 @@ class ChatService:
         if group is None:
             return False, "Group not found."
         username = username.strip()
-        if username == self.username:
-            return False, "Use Leave Group to leave the group."
-        if username not in group["members"]:
-            return False, "User is not a member of this group."
-        group["members"].remove(username)
-        return True, "Member removed successfully."
+        # if username == self.username:
+        #     return False, "Use Leave Group to leave the group."
+        # if username not in group["members"]:
+        #     return False, "User is not a member of this group."
+        # group["members"].remove(username)
+        # return True, "Member removed successfully."
+
+        #send command to server, let server know add a new user
+        remove = f"REMOVE_MEMBER|{group_id}|{username}"
+        self.sock.sendall(remove.encode())
+        response = self.sock.recv(2048).decode()
+        return response
+
 
     # current user leaves group
     def leave_group(self, group_id):
@@ -137,21 +150,18 @@ class ChatService:
         if group is None:
             return False, "Group not found."
 
-        if self.username not in group["members"]:
-            return False, "You are not a member of this group."
+        # if self.username not in group["members"]:
+        #     return False, "You are not a member of this group."
+        # group["members"].remove(self.username)
+        # # remove group from current user's group list
+        # self.groups.remove(group)
+        # return True, "You left the group successfully."
 
-        group["members"].remove(self.username)
-
-        # remove group from current user's group list
-        self.groups.remove(group)
-
-        return True, "You left the group successfully."
-
-    # remove group from current user's group list
-        self.groups.remove(group)
-
-        return True, "You left the group successfully."
-
+        #send command to server, let server know add a new user
+        leave = f"LEAVE_GROUP|{group_id}"
+        self.sock.sendall(leave.encode())
+        response = self.sock.recv(2048).decode()
+        return response
 
     # get group members
     def get_group_members(self, group_id):

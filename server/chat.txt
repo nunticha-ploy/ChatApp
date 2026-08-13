@@ -1,2 +1,2 @@
 GROUP|2|GroupB|testUser1
-GROUP|3|yes|Alice
+GROUP|3|chattt|Alice

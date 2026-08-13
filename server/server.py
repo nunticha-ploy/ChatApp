@@ -150,10 +150,24 @@ def userLoginHandle(client, address):
                 client.sendall(f"GROUP_DELETED|{group_id}".encode())
                 continue
 
+              #add numbers in group
+              # elif message.startswith("ADD_MEMBER|"):
+              #   group_id = message.split("|", 2)[1].strip()
+              #   member_username = message.split("|", 2)[2].strip()
+              #   allowed, reason = can_edit_group(group_id, username)
+              #   if not allowed:
+              #     client.sendall(f"ADD_MEMBER_FAILED|{reason}".encode())
+              #     continue
+
+              #   add_member(group_id, member_username)
+              #   client.sendall(f"MEMBER_ADDED|{group_id}|{member_username}".encode())
+              #   continue
+
               print(f"{username}: {message}")
                # Kirandeep: automatically save every valid chat message
               save_message(username, message)
               client.sendall(("Server received: " + message).encode())
+
 
       #singup
       elif parts[0] == "SIGNUP":
@@ -172,6 +186,22 @@ def userLoginHandle(client, address):
 
         response = "Server received: " + message
         client.send(response.encode())
+
+    #other choose
+    else:
+      message = data.decode().strip()
+      print("Client:", message)
+
+      response = "Server received: " + message
+      client.send(response.encode())
+
+
+
+
+
+
+
+
   except Exception as error:
     print("Error:", error)
 
