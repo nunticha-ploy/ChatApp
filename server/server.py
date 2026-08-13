@@ -53,24 +53,29 @@ def userLoginHandle(client, address):
               if not data:
                 break
               message = data.decode().strip()
+
               #logout
               if message.upper() == "LOGOUT":
                 #user status
                 user_status[username] = "offline"
+                connected_clients.pop(username, None)
                 client.sendall("Logout successfully!" .encode())
                 break
+
               #get users
               elif message.upper() == "GET_USERS":
                 print("GET_USERS received")
                 registered_users = get_all_registered_users()
                 print("Registerd user:", registered_users)
+
                 user_list = []
+
                 for registered_username in registered_users:
                   status = user_status.get(registered_username, "offline")
-                  if username in connected_clients:
-                    del connected_clients[username]
                   print(registered_username, status)
+
                   user_list.append(f"{registered_username},{status}")
+
                 response = "|".join(user_list)
                 print("Sending users", response)
                 client.sendall(response.encode())
@@ -169,9 +174,11 @@ def userLoginHandle(client, address):
         client.send(response.encode())
   except Exception as error:
     print("Error:", error)
+
   finally:
     if "username" in locals():
       user_status[username] = "offline"
+      connected_clients.pop(username, None)
     client.close()
     print("Client disconnected:", address) 
 
