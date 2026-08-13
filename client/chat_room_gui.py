@@ -186,6 +186,14 @@ class ChatRoomGUI:
         name_label = tk.Label(row, text=group_name, font=row_name_font, fg=black, bg=white, bd=0)
         name_label.pack(anchor=tk.NW)
 
+        #setting button for rename/ delete
+        setting_button = tk.Label(row, text="\u22EE", font=chevron_font, fg=mid_gray, bg=white, bd=0, cursor="hand2")
+        setting_button.place(relx=1.0, rely=0.5, anchor="e", x=-25)
+        setting_button.bind(
+            "<Button-1>",
+            lambda e, b=setting_button, gid=group_id, gname=group_name: self.group_setting(b, gid, gname)
+        )
+
         # enter chat sign >
         enter_chat_sign = tk.Label(row, text="\u203A", font=chevron_font, fg=mid_gray, bg=white, bd=0)
         enter_chat_sign.place(relx=1.0, rely=0.5, anchor="e")
@@ -201,6 +209,54 @@ class ChatRoomGUI:
         self.current_room = ChatRoom(id=group_id, type="group", name=group_name)
         msg = self.chat_service.get_group_chat(group_id)
         self.show_chat_page(self.current_room, msg, "Group")
+
+         #group setting container
+    def group_setting(self, button, group_id, group_name):
+        option =tk.Menu(self.root, tearoff=0)
+
+        option.add_command(label="Rename", command=lambda: self.rename_group_chat(group_id, group_name, group_name))
+        option.add_command(label="Delete", command=lambda: self.delete_group_chat(group_id, group_name))
+        x = button.winfo_rootx()
+        y = button.winfo_rooty() + button.winfo_height()
+
+        option.post(x, y)
+
+    #rename group
+    def rename_group_chat(self, group_id, group_name, current_name):
+        new_name = simpledialog.askstring("Rename", "New group name:", initialvalue=current_name, parent=self.root)
+
+        if new_name is None:
+            return
+
+        new_name = new_name.strip()
+
+        # validation input field cannot be empty
+        if not new_name:
+            messagebox.showwarning("Invalid", "Group name cannot be empty.")
+            return
+
+        response = self.chat_service.rename_group_chat(group_id, new_name)
+        if response.startswith("GROUP_RENAMED"):  # <<< เพิ่มการเช็ค response
+            self.show_user_page()
+        else:
+            messagebox.showerror("Error", response)
+        self.show_user_page()
+
+    #delete group chat
+    def delete_group_chat(self, group_id, group_name):
+        confirm = messagebox.askyesno(
+            "Delete group",
+            f"Are you sure you want to delete '{group_name}'?"
+        )
+        if not confirm:
+            return
+
+        response = self.chat_service.delete_group_chat(group_id)
+
+        if response.startswith("GROUP_DELETED"):
+            self.show_user_page()
+        else:
+            messagebox.showerror("Error", response)
 
     # Chat page
     def show_chat_page(self, room, msg, status):
