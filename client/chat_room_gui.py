@@ -1,6 +1,7 @@
 # import library
 import tkinter as tk
 from tkinter import simpledialog, messagebox
+from datetime import datetime
 
 from room_class import ChatRoom
 
@@ -36,6 +37,8 @@ class ChatRoomGUI:
 
         # set variable for current chat room
         self.current_room = None
+        self.current_messages = []
+        self.refresh_job = None
 
         self.root.title("Company Chat")
         self.root.geometry("415x700")
@@ -72,6 +75,15 @@ class ChatRoomGUI:
 
     # display user page
     def show_user_page(self):
+
+        # Stop real-time message checking
+        if self.refresh_job is not None:
+
+            self.root.after_cancel(
+                self.refresh_job
+            )
+
+            self.refresh_job = None
         self.clear()
 
         # create header
@@ -121,23 +133,9 @@ class ChatRoomGUI:
     # function create new group chat
     def create_group_chat(self):
         group_name = simpledialog.askstring("New group", "Group name:", parent=self.root)
-
-        if group_name is None:
-            return
-
-        group_name = group_name.strip()
-
-        #validation input field cannot be empty
-        if not group_name:
-            messagebox.showwarning("Invalid", "Group name cannot be empty.")
-            return
-
-        response = self.chat_service.create_group_chat(group_name)
-
-        if response.startswith("GROUP_CREATED"):
+        if group_name:
+            self.chat_service.create_group_chat(group_name)
             self.show_user_page()
-        else:
-            messagebox.showerror("Error", response)
 
     # create user row to display
     def create_user_row(self, container, user):
@@ -188,14 +186,6 @@ class ChatRoomGUI:
         name_label = tk.Label(row, text=group_name, font=row_name_font, fg=black, bg=white, bd=0)
         name_label.pack(anchor=tk.NW)
 
-        #setting button for rename/ delete
-        setting_button = tk.Label(row, text="\u22EE", font=chevron_font, fg=mid_gray, bg=white, bd=0, cursor="hand2")
-        setting_button.place(relx=1.0, rely=0.5, anchor="e", x=-25)
-        setting_button.bind(
-            "<Button-1>",
-            lambda e, b=setting_button, gid=group_id, gname=group_name: self.group_setting(b, gid, gname)
-        )
-
         # enter chat sign >
         enter_chat_sign = tk.Label(row, text="\u203A", font=chevron_font, fg=mid_gray, bg=white, bd=0)
         enter_chat_sign.place(relx=1.0, rely=0.5, anchor="e")
@@ -211,54 +201,6 @@ class ChatRoomGUI:
         self.current_room = ChatRoom(id=group_id, type="group", name=group_name)
         msg = self.chat_service.get_group_chat(group_id)
         self.show_chat_page(self.current_room, msg, "Group")
-
-    #group setting container
-    def group_setting(self, button, group_id, group_name):
-        option =tk.Menu(self.root, tearoff=0)
-
-        option.add_command(label="Rename", command=lambda: self.rename_group_chat(group_id, group_name, group_name))
-        option.add_command(label="Delete", command=lambda: self.delete_group_chat(group_id, group_name))
-        x = button.winfo_rootx()
-        y = button.winfo_rooty() + button.winfo_height()
-
-        option.post(x, y)
-
-    #rename group
-    def rename_group_chat(self, group_id, group_name, current_name):
-        new_name = simpledialog.askstring("Rename", "New group name:", initialvalue=current_name, parent=self.root)
-
-        if new_name is None:
-            return
-
-        new_name = new_name.strip()
-
-        # validation input field cannot be empty
-        if not new_name:
-            messagebox.showwarning("Invalid", "Group name cannot be empty.")
-            return
-
-        response = self.chat_service.rename_group_chat(group_id, new_name)
-        if response.startswith("GROUP_RENAMED"):  # <<< เพิ่มการเช็ค response
-            self.show_user_page()
-        else:
-            messagebox.showerror("Error", response)
-        self.show_user_page()
-
-    #delete group chat
-    def delete_group_chat(self, group_id, group_name):
-        confirm = messagebox.askyesno(
-            "Delete group",
-            f"Are you sure you want to delete '{group_name}'?"
-        )
-        if not confirm:
-            return
-
-        response = self.chat_service.delete_group_chat(group_id)
-
-        if response.startswith("GROUP_DELETED"):
-            self.show_user_page()
-        else:
-            messagebox.showerror("Error", response)
 
     # Chat page
     def show_chat_page(self, room, msg, status):
@@ -278,105 +220,65 @@ class ChatRoomGUI:
         group_chat_name = tk.Label(top_frame, text=room.name, font=header_font, fg=white, bg=dark_gray)
         group_chat_name.place(relx=0.5, rely=0.5, anchor="center")
 
-        # group member controls
-        if room.type == "group":
-            group_controls = tk.Frame(
-                self.root,
-                background=light_gray
-            )
-
-            group_controls.pack(
-                fill="x"
-            )
-
-            add_member_button = tk.Button(
-                group_controls,
-                text="Add Member",
-                font=name_font,
-                command=self.add_group_member
-            )
-
-            add_member_button.pack(
-                side=tk.LEFT,
-                padx=(10, 5),
-                pady=6
-            )
-
-            remove_member_button = tk.Button(
-                group_controls,
-                text="Remove Member",
-                font=name_font,
-                command=self.remove_group_member
-            )
-
-            remove_member_button.pack(
-                side=tk.LEFT,
-                padx=5,
-                pady=6
-            )
-
-            leave_group_button = tk.Button(
-                group_controls,
-                text="Leave Group",
-                font=name_font,
-                command=self.leave_group_chat
-            )
-
-            leave_group_button.pack(
-                side=tk.RIGHT,
-                padx=(5, 10),
-                pady=6
-            )
-
-            # display group members
-            members_frame = tk.Frame(
-                self.root,
-                background=white
-            )
-            members_frame.pack(
-                fill="x",
-                padx=10,
-                pady=(8, 5)
-            )
-
-            members_title = tk.Label(
-                members_frame,
-                text="MEMBERS",
-                font=bold_font,
-                fg=mid_gray,
-                bg=white
-            )
-            members_title.pack(
-                anchor=tk.W
-            )
-
-            members = self.chat_service.get_group_members(
-                room.id
-            )
-
-            if members:
-                members_text = ", ".join(members)
-            else:
-                members_text = "No members"
-
-            members_label = tk.Label(
-                members_frame,
-                text=members_text,
-                font=name_font,
-                fg=black,
-                bg=white
-            )
-            members_label.pack(
-                anchor=tk.W,
-                pady=(3, 0)
-            )
-
         # background
-        frame = tk.Frame(self.root, background=white)
-        frame.pack(fill="both", expand=True)
+                # Search messages area
+        search_frame = tk.Frame(
+            self.root,
+            background=white
+        )
 
-        # bubble message
-        for message in msg:
+        search_frame.pack(
+            fill="x",
+            padx=10,
+            pady=5
+        )
+
+        self.search_entry = tk.Entry(
+            search_frame,
+            font=msg_font
+        )
+
+        self.search_entry.pack(
+            side=tk.LEFT,
+            fill="x",
+            expand=True,
+            padx=(5, 5)
+        )
+
+        search_button = tk.Button(
+            search_frame,
+            text="Search",
+            font=name_font,
+            command=self.search_messages
+        )
+
+        search_button.pack(
+            side=tk.RIGHT,
+            padx=5
+        )
+
+        # Press Enter to search
+        self.search_entry.bind(
+            "<Return>",
+            self.search_messages
+        )
+               # Frame containing chat messages
+        self.message_frame = tk.Frame(
+            self.root,
+            background=white
+        )
+
+       
+        self.message_frame.pack(
+            fill="both",
+            expand=True
+        )
+
+                # Save messages for the current chat
+        self.current_messages = msg
+
+        # Display messages
+        for message in self.current_messages:
             sender = message["username"]
             text = message["msg"]
 
@@ -399,23 +301,11 @@ class ChatRoomGUI:
                 sender_label.pack(side=tk.LEFT)
                 bubble.pack(side=tk.LEFT, padx=(8, 0))
 
-            typing_frame = tk.Frame(
-            self.root,
-            width=415,
-            height=60,
-            background=dark_gray
-        )
+        typing_frame = tk.Frame(self.root, width=415, height=60, background=dark_gray)
 
-            typing_frame.place(
-            x=0,
-            y=640,
-            width=415,
-            height=60
-        )
-
-            typing_frame.lift()
-
-    # message entry
+        typing_frame.pack(fill="x", side=tk.BOTTOM)
+        typing_frame.pack_propagate(False)
+                # Message input box
         self.message_entry = tk.Entry(
             typing_frame,
             font=msg_font
@@ -428,8 +318,7 @@ class ChatRoomGUI:
             padx=(10, 5),
             pady=12
         )
-
-        # Send button
+                # Send button
         send_button = tk.Button(
             typing_frame,
             text="Send",
@@ -443,164 +332,349 @@ class ChatRoomGUI:
             pady=12
         )
 
-        # Press Enter to send
+
+                # Clear chat button
+        clear_button = tk.Button(
+            typing_frame,
+            text="Clear",
+            font=name_font,
+            command=self.clear_chat_history
+        )
+
+        clear_button.pack(
+            side=tk.RIGHT,
+            padx=(5, 5),
+            pady=12
+        )
+
+                # Press Enter to send
         self.message_entry.bind(
             "<Return>",
             self.send_message
         )
 
-            # send message
-    def send_message(self, event=None):
+        # Start checking for new messages
+        self.start_message_refresh()
 
-        if self.current_room is None:
-            return "break"
+
+        
+             # Send a message
+    def send_message(self, event=None):
 
         message = self.message_entry.get().strip()
 
-        # do nothing if textbox is empty
+        # Prevent empty messages
         if not message:
-            return "break"
-
-        success = self.chat_service.send_msg(
-            self.current_room,
-            message
-        )
-
-        if success:
-
-            # clear textbox after sending
-            self.message_entry.delete(
-                0,
-                tk.END
+            messagebox.showwarning(
+                "Empty Message",
+                "Please enter a message before sending."
             )
 
-            messagebox.showinfo(
-                "Message Sent",
-                "Message sent successfully."
+            self.message_entry.focus_set()
+
+            return "break"
+        
+
+        try:
+
+            # Send message using the existing chat service
+            success = self.chat_service.send_msg(
+                self.current_room,
+                message
+            )
+
+            if success:
+
+                # Add the new message to the current chat
+                # Get the current time
+                current_time = datetime.now().strftime("%I:%M %p")
+
+                # Create the new message
+                new_message = {
+                "username": self.current_user["username"],
+                "msg": message,
+                "time": current_time
+}
+
+                self.current_messages.append(
+                    new_message
+                )
+
+                # Clear the message box
+                self.message_entry.delete(
+                    0,
+                    tk.END
+                )
+
+                # Refresh the chat display
+                self.display_messages(
+                    self.current_messages
+                )
+
+        except Exception as error:
+
+            print(
+                "Error sending message:",
+                error
             )
 
         return "break"
-  # add member to current group
-    def add_group_member(self):
-        if self.current_room is None:
-            return
 
-        if self.current_room.type != "group":
-            return
 
-        username = simpledialog.askstring(
-            "Add Member",
-            "Enter username:",
-            parent=self.root
+            # Search messages in the current chat
+    def search_messages(self, event=None):
+
+        search_text = (
+            self.search_entry.get()
+            .strip()
+            .lower()
         )
 
-        if username is None:
-            return
+        # If search box is empty, show all messages
+        if not search_text:
 
-        success, message = self.chat_service.add_member(
-            self.current_room.id,
-            username
+            self.display_messages(
+                self.current_messages
+            )
+
+            return "break"
+
+        # Store matching messages
+        matching_messages = []
+
+        # Check each message
+        for message in self.current_messages:
+
+            username = message["username"].lower()
+            text = message["msg"].lower()
+
+            # Search username or message text
+            if (
+                search_text in username
+                or search_text in text
+            ):
+
+                matching_messages.append(
+                    message
+                )
+
+        # Display search results
+        self.display_messages(
+            matching_messages
         )
 
-        if success:
-            messagebox.showinfo(
-                "Add Member",
-                message
-            )
+        return "break"
+            # Clear messages from the current chat
+    def clear_chat_history(self):
 
-            # refresh group page to show updated members
-            self.show_chat_page(
-                self.current_room,
-                self.chat_service.get_group_chat(
-                    self.current_room.id
-                ),
-                "Group"
-            )
-
-        else:
-            messagebox.showwarning(
-                "Add Member",
-                message
-            )
-
- # remove member from current group
-    def remove_group_member(self):
-        if self.current_room is None:
-            return
-
-        if self.current_room.type != "group":
-            return
-
-        username = simpledialog.askstring(
-            "Remove Member",
-            "Enter username:",
-            parent=self.root
-        )
-
-        if username is None:
-            return
-
-        success, message = self.chat_service.remove_member(
-            self.current_room.id,
-            username
-        )
-
-        if success:
-            messagebox.showinfo(
-                "Remove Member",
-                message
-            )
-
-            # refresh group page to show updated members
-            self.show_chat_page(
-                self.current_room,
-                self.chat_service.get_group_chat(
-                    self.current_room.id
-                ),
-                "Group"
-            )
-
-        else:
-            messagebox.showwarning(
-                "Remove Member",
-                message
-            )
-
- # leave current group
-    def leave_group_chat(self):
-        if self.current_room is None:
-            return
-
-        if self.current_room.type != "group":
-            return
-
+        # Ask the user for confirmation
         confirm = messagebox.askyesno(
-            "Leave Group",
-            "Are you sure you want to leave this group?"
+            "Clear Chat History",
+            "Are you sure you want to clear this chat?"
         )
 
         if not confirm:
             return
 
-        success, message = self.chat_service.leave_group(
-            self.current_room.id
+        # Remove messages from the current chat display
+        self.current_messages.clear()
+
+        # Refresh the message area
+        self.display_messages(
+            self.current_messages
         )
 
-        if success:
-            messagebox.showinfo(
-                "Leave Group",
-                message
+        # Show confirmation
+        messagebox.showinfo(
+            "Clear Chat",
+            "Chat history cleared."
+        )
+            # Display messages in the chat window
+    def display_messages(self, messages):
+
+        # Remove old message bubbles
+        for widget in self.message_frame.winfo_children():
+            widget.destroy()
+
+        # Display each message
+        for message in messages:
+
+            sender = message["username"]
+            text = message["msg"]
+
+            # Get message time
+            message_time = message.get(
+            "time",
+            datetime.now().strftime("%I:%M %p")
+)
+
+            row = tk.Frame(
+                self.message_frame,
+                bg=white
             )
 
-            self.current_room = None
-            self.show_user_page()
+            row.pack(
+                fill="x",
+                padx=20,
+                pady=7
+            )
+
+            is_other_party = (
+                sender != self.current_user["username"]
+            )
+
+            bubble_bg = (
+                bubble_gray
+                if is_other_party
+                else light_gray
+            )
+
+            bubble_fg = (
+                white
+                if is_other_party
+                else black
+            )
+
+            bubble = tk.Label(
+                row,
+                text=text,
+                font=msg_font,
+                fg=bubble_fg,
+                bg=bubble_bg,
+                padx=12,
+                pady=6,
+                wraplength=260
+            )
+
+            sender_label = tk.Label(
+                row,
+                text=sender,
+                font=name_font,
+                fg=mid_gray,
+                bg=white
+            )
+             
+            time_label = tk.Label(
+                row,
+                text=message_time,
+                font=("Inclusive Sans", 8),
+                fg=mid_gray,
+                bg=white
+)
+                  
+            sender_label.pack(
+                side=tk.RIGHT
+            )
+
+            time_label.pack(
+                side=tk.RIGHT,
+                padx=(0, 5)
+            )
+
+            bubble.pack(
+                side=tk.RIGHT,
+                padx=(0, 8)
+            )
 
         else:
-            messagebox.showwarning(
-                "Leave Group",
-                message
+
+            sender_label.pack(
+                side=tk.LEFT
             )
 
+            bubble.pack(
+                side=tk.LEFT,
+                padx=(8, 0)
+            )
+
+            time_label.pack(
+                side=tk.LEFT,
+                padx=(5, 0)
+            )
+
+                    # Start checking for new messages
+    def start_message_refresh(self):
+
+        # Cancel an existing refresh timer
+        if self.refresh_job is not None:
+
+            self.root.after_cancel(
+                self.refresh_job
+            )
+
+        # Start a new timer
+        self.refresh_job = self.root.after(
+            1000,
+            self.refresh_messages
+        )
+
+
+    # Check the server for new messages
+    def refresh_messages(self):
+
+        # Stop if no chat is open
+        if self.current_room is None:
+            return
+
+        try:
+
+            # Get the latest messages
+            if self.current_room.type == "private":
+
+                latest_messages = (
+                    self.chat_service.get_one_on_one_chat(
+                        self.current_room.id
+                    )
+                )
+
+            else:
+
+                latest_messages = (
+                    self.chat_service.get_group_chat(
+                        self.current_room.id
+                    )
+                )
+
+                        # Update messages only when search is not active
+            search_text = ""
+
+            if hasattr(self, "search_entry"):
+                search_text = (
+                    self.search_entry.get()
+                    .strip()
+                    .lower()
+                )
+
+            if len(latest_messages) > len(self.current_messages):
+
+                # Save the new messages
+                self.current_messages = latest_messages
+
+                # Do not replace search results
+                if not search_text:
+
+                    self.display_messages(
+                        self.current_messages
+                    )
+
+            # Check again after 1 second
+            self.refresh_job = self.root.after(
+                1000,
+                self.refresh_messages
+            )
+
+        except Exception as error:
+
+            print(
+                "Error receiving messages:",
+                error
+            )
+
+            # Try again after 1 second
+            self.refresh_job = self.root.after(
+                1000,
+                self.refresh_messages
+            )
 # hardcode data for testing
 
 #if __name__ == "__main__":
@@ -654,3 +728,5 @@ if __name__ == "__main__":
     )
 
     root.mainloop()
+
+
